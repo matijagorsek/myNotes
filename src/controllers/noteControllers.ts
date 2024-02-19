@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Note from '../models/noteModel';
-import { generateUniqueId, getTimestamp } from '../utilities';
+import { generateUniqueId, getTimestamp } from '../utilities/utilities';
 
 let notes: Note[] = [];
 
