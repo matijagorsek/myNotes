@@ -1,5 +1,5 @@
 import express from 'express';
-import noteRoutes from './routes/noteRoutes';
+import noteRoutes from './routes/NoteRoutes';
 
 const app = express();
 const PORT = 3000;

@@ -1,6 +1,8 @@
-import { Request, Response } from 'express';
-import Note from '../models/noteModel';
+import { NextFunction, Request, Response } from 'express';
+import Note from '../models/Note';
 import { generateUniqueId, getTimestamp } from '../utilities/utilities';
+import { validate } from 'uuid';
+
 
 let notes: Note[] = [];
 
@@ -31,7 +33,7 @@ export const createNote = (req: Request, res: Response) => {
 };
 
 export const updateNote = (req: Request, res: Response) => {
-  const noteId = req.query.id;
+  const noteId = req.params.id;
   const content = req.body.content;
 
   const note = notes.find(note => note.id === noteId);
@@ -74,14 +76,12 @@ export const getAllNotesByAuthor = (req: Request, res: Response) => {
   return res.json(filteredNotes);
 };
 
+
 export const getNoteById = (req: Request, res: Response) => {
   const noteId = req.params.id;
-
   const note = notes.find(note => note.id === noteId);
-
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
   }
-
   return res.json(note);
 };
