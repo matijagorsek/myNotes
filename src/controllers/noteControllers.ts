@@ -31,8 +31,8 @@ export const createNote = (req: Request, res: Response) => {
 };
 
 export const updateNote = (req: Request, res: Response) => {
-  const noteId = req.query.id as string;
-  const content = req.body.content as string;
+  const noteId = req.query.id;
+  const content = req.body.content;
 
   const note = notes.find(note => note.id === noteId);
 
@@ -61,7 +61,7 @@ export const getAllNotes = (req: Request, res: Response) => {
 };
 
 export const getAllNotesByAuthor = (req: Request, res: Response) => {
-  const authorId = req.query.authorId as string;
+  const authorId = req.query.authorId;
 
   if (!authorId) {
     return res.status(400).json({ message: 'AuthorId is required.' });
@@ -69,7 +69,19 @@ export const getAllNotesByAuthor = (req: Request, res: Response) => {
 
   const filteredNotes = notes.filter(note => note.authorId === authorId);
   if (filteredNotes.length == 0) {
-    return res.status(404).json({ message: 'There are no notes for this user.' });
+    return res.status(204).json({ message: 'There are no notes for this user.' });
   }
   return res.json(filteredNotes);
+};
+
+export const getNoteById = (req: Request, res: Response) => {
+  const noteId = req.params.id;
+
+  const note = notes.find(note => note.id === noteId);
+
+  if (!note) {
+    return res.status(404).json({ message: 'Note not found.' });
+  }
+
+  return res.json(note);
 };
