@@ -1,10 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Note from '../models/Note';
 import { generateUniqueId, getTimestamp } from '../utilities/utilities';
-import { validate } from 'uuid';
 
-
-let notes: Note[] = [];
+const notes: Note[] = [];
 
 export const createNote = (req: Request, res: Response) => {
   const { content, authorId } = req.body;
