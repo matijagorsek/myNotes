@@ -1,6 +1,6 @@
 import express from 'express';
 import { createNote, updateNote, deleteNote, getAllNotes, getAllNotesByAuthor, getNoteById } from '../controllers/NoteController';
-import { validateId } from '../validators/validators';
+import { validateId } from '../../validators/validators';
 
 
 const router = express.Router();
