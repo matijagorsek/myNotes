@@ -82,17 +82,24 @@ export const refreshToken = async (req: Request, res: Response) => {
     const refreshToken = req.body.refreshToken;
     let userEmailFromToken = ''
     let userIdFromToken = ''
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided' });
+    }
     jwt.verify(refreshToken, tokenApiKey, (error: VerifyErrors | null, decoded: any) => {
         if (error) {
-            console.error('Failed to verify token:', error);
+            console.error('Error verifying refresh token:', error.message);
+            if (error.name === 'RefreshTokenExpiredError') {
+                return res.status(401).json({ message: 'Refresh Token expired' });
+            } else if (error.name === 'JsonWebRefreshTokenError') {
+                return res.status(403).json({ message: 'Invalid refresh token' });
+            } else {
+                return res.status(500).json({ message: 'Failed to authenticate refresh token' });
+            }
         } else {
             userEmailFromToken = decoded.email;
             userIdFromToken = decoded.userId;
         }
     });
-    if (!refreshToken) {
-        return res.status(401).json({ message: 'No refresh token provided' });
-    }
     console.log('RefreshedData', userEmailFromToken, userIdFromToken)
     const authToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '15m' });
     const newRefreshToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '3d' });
