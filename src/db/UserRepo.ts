@@ -4,13 +4,13 @@ import { userCollection } from "./DBConstants";
 import db from "./MyNotesDB";
 import bcrypt from 'bcrypt';
 
-const database = db.dataBaseInstance;
+const collection = db.dataBaseInstance.collection(userCollection);
 
 export async function saveUserToDB(user: User) {
   try {
     const hashedPassword = await bcrypt.hash(user.password, user.password.length)
     user.password = hashedPassword
-    await database.collection(userCollection).insertOne(user);
+    await collection.insertOne(user);
     console.log('User created successfully');
   } catch (error) {
     console.log('Error creating user:', error);
@@ -18,7 +18,7 @@ export async function saveUserToDB(user: User) {
 }
 
 export async function loginUserWithDb(email: string, password: string): Promise<[boolean, ObjectId]> {
-  const user = await database.collection(userCollection).findOne({ email: email })
+  const user = await collection.findOne({ email: email })
   if (user) {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (passwordMatch) {
@@ -34,7 +34,7 @@ export async function loginUserWithDb(email: string, password: string): Promise<
 
 export async function getAllUsers(): Promise<[boolean, any[]]> {
   try {
-    const users = await database.collection(userCollection).find().toArray();
+    const users = await collection.find().toArray();
     return ([true, users])
   } catch (error) {
     return ([false, []])
@@ -42,7 +42,7 @@ export async function getAllUsers(): Promise<[boolean, any[]]> {
 };
 
 export async function checkIfUserExist(email: string): Promise<boolean> {
-  const user = await database.collection(userCollection).findOne({ email: email })
+  const user = await collection.findOne({ email: email })
   if (user) {
     return true
   }

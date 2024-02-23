@@ -70,10 +70,10 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 function returnUserData(email: string, res: Response, id: ObjectId) {
-    const authToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '2m' });
+    const authToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '15m' });
     const refreshToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '3d' });
 
-    return res.status(200).json({ authToken: authToken, refreshToken: refreshToken, expiresIn: '2m' });
+    return res.status(200).json({ authToken: authToken, refreshToken: refreshToken, expiresIn: '15m' });
 }
 
 
@@ -94,9 +94,9 @@ export const refreshToken = async (req: Request, res: Response) => {
         return res.status(401).json({ message: 'No refresh token provided' });
     }
     console.log('RefreshedData', userEmailFromToken, userIdFromToken)
-    const authToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '2m' });
+    const authToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '15m' });
     const newRefreshToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '3d' });
-    return res.status(200).json({ authToken: authToken, refreshToken: newRefreshToken, expiresIn: '2m' });
+    return res.status(200).json({ authToken: authToken, refreshToken: newRefreshToken, expiresIn: '15m' });
 }
 
 

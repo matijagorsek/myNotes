@@ -9,7 +9,7 @@ router.post('/', verifyToken, createNote);
 router.get('/', verifyToken, getAllNotes);
 router.get('/byAuthor', verifyToken, validateId, getAllNotesByAuthor);
 router.get('/:id', verifyToken, getNoteById)
-router.patch('/:id', verifyToken, validateId, updateNote);
+router.patch('/:id', verifyToken, updateNote);
 router.delete('/:id', verifyToken, validateId, deleteNote);
 
 export default router;

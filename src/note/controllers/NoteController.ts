@@ -1,25 +1,19 @@
 import { Request, Response } from 'express';
 import Note from '../models/Note';
-import { saveNoteToDB } from '../../db/NotesDbRepo';
-import { generateUniqueId, getTimestamp } from '../../utilities/Utilities';
+import { checkIfNoteExist, fetchAllNotesFromDb, saveNoteToDB, updateNoteInTheDB } from '../../db/NotesDbRepo';
+import { getTimestamp } from '../../utilities/Utilities';
 import { ObjectId } from 'mongodb';
+import { getAuthorId } from '../../auth/AuthMiddleware';
 
 const notes: Note[] = [];
 
 
-export const createNote = (req: Request, res: Response) => {
-  const { content, authorId } = req.body;
-
-  if (!content || !authorId) {
-    return res.status(400).json({ message: 'Both content and authorId are required.' });
+export const createNote = async (req: Request, res: Response) => {
+  const { content } = req.body;
+  const authorId = await getAuthorId(req)
+  if (!content) {
+    return res.status(400).json({ message: 'Content is required.' });
   }
-
-  const existingNote = notes.find(note => note.content === content && note.authorId === authorId);
-
-  if (existingNote) {
-    return res.status(400).json({ message: 'A note with the same content and authorId already exists.' });
-  }
-
 
   const newNote: Note = {
     _id: new ObjectId(),
@@ -30,19 +24,17 @@ export const createNote = (req: Request, res: Response) => {
   };
 
   saveNoteToDB(newNote)
-
-
   notes.push(newNote);
 
   return res.status(200).json(newNote);
 };
 
 
-export const updateNote = (req: Request, res: Response) => {
+export const updateNote = async (req: Request, res: Response) => {
   const noteId = req.params.id;
   const content = req.body.content;
 
-  const note = notes.find(note => note._id.toString() === noteId);
+  const note = await checkIfNoteExist(noteId)
 
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
@@ -50,7 +42,7 @@ export const updateNote = (req: Request, res: Response) => {
 
   note.content = content || note.content;
   note.updatedAt = getTimestamp();
-
+  await updateNoteInTheDB(content,noteId,note.updatedAt)
   return res.json(note);
 };
 
@@ -64,12 +56,13 @@ export const deleteNote = (req: Request, res: Response) => {
   return res.status(200).send();
 };
 
-export const getAllNotes = (req: Request, res: Response) => {
-  return res.json(notes);
-};
+export const getAllNotes = async (req: Request, res: Response) => {
+  const notes = await fetchAllNotesFromDb()
+  return res.status(200).json(notes)
+}
 
-export const getAllNotesByAuthor = (req: Request, res: Response) => {
-  const authorId = req.query.authorId;
+export const getAllNotesByAuthor = async (req: Request, res: Response) => {
+  const authorId = await getAuthorId(req);
 
   if (!authorId) {
     return res.status(400).json({ message: 'AuthorId is required.' });
