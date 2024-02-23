@@ -1,16 +1,15 @@
 import express from 'express';
 import { createNote, updateNote, deleteNote, getAllNotes, getAllNotesByAuthor, getNoteById } from '../controllers/NoteController';
 import { validateId } from '../../validators/validators';
-
+import { verifyToken } from '../../auth/AuthMiddleware';
 
 const router = express.Router();
 
-router.post('/', createNote);
-router.get('/', getAllNotes);
-router.get('/byAuthor', validateId, getAllNotesByAuthor);
-router.get('/:id', validateId, getNoteById)
-router.patch('/:id', validateId, updateNote);
-router.delete('/:id', validateId, deleteNote);
-
+router.post('/', verifyToken, createNote);
+router.get('/', verifyToken, getAllNotes);
+router.get('/byAuthor', verifyToken, validateId, getAllNotesByAuthor);
+router.get('/:id', verifyToken, getNoteById)
+router.patch('/:id', verifyToken, validateId, updateNote);
+router.delete('/:id', verifyToken, validateId, deleteNote);
 
 export default router;

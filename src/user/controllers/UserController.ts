@@ -1,29 +1,28 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import User from "../models/User"
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { isUppercaseAndSpecialCharacterPassword, isValidEmail, isValidPasswordLength } from '../../validators/validators';
+import { ObjectId } from 'mongodb';
+import { checkIfUserExist, loginUserWithDb, saveUserToDB } from '../../db/UserRepo';
+import { refreshTokenApiKey, tokenApiKey } from '../..';
 
-const users: User[] = [];
 
-export const registerUser = (req: Request, res: Response) => {
+let users: any[] = [];
+
+export const registerUser = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password, userRole, gender } = req.body;
-    console.log(req.body)
+    try {
+        if (await checkIfUserExist(email))
+            return res.status(400).json({ message: 'User with this email already exists' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
     if (!firstName || !lastName || !email || !userRole || !password || !-1) {
         return res.status(400).json({ message: 'All fields are required for registration.' });
     }
 
-    if (users.some((user) => user.email === email)) {
-        return res.status(400).json({ message: 'User with this email already exists' });
-    }
-
     if (!isValidEmail(req.body.email)) {
         return res.status(400).json({ message: 'Wrong Email format' });
-    }
-
-    if (users.some((user) => user.email === email)) {
-        return res.status(400).json({ message: 'Email already exists' });
     }
 
     if (!isValidPasswordLength(req.body.password)) {
@@ -34,9 +33,10 @@ export const registerUser = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Password needs to contain at uppercase letter and special character' });
     }
 
-    const id = uuidv4();
+
+    const _id = new ObjectId();
     const newUser: User = {
-        id,
+        _id,
         firstName,
         lastName,
         email,
@@ -45,12 +45,13 @@ export const registerUser = (req: Request, res: Response) => {
         gender,
     };
 
+    saveUserToDB(newUser);
     users.push(newUser);
 
     return res.status(201).json(newUser);
 };
 
-export const loginUser = (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response) => {
     if (!req.body.email || !req.body.password) {
         return res.status(400).json({ message: 'All fields are required for login.' });
     }
@@ -58,11 +59,45 @@ export const loginUser = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Wrong Email format' });
     }
     const { email, password } = req.body;
-    const user = users.find(user => user.email === email && user.password === password);
-    if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
+    try {
+        const ifUserExist = await loginUserWithDb(email, password)
+        if (!ifUserExist[0]) return res.status(404).json({ message: 'Wrong credentials' });
+        else returnUserData(email, res, ifUserExist[1]);
+
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error' });
     }
-    const authToken = jwt.sign({ email: user.email }, crypto.randomBytes(32).toString('hex'), { expiresIn: 3600000 });
-    const refreshToken = crypto.randomBytes(32).toString('hex');
-    return res.status(200).json({ authToken: authToken, refreshToken: refreshToken, expiresIn: 3600000 });
 };
+
+function returnUserData(email: string, res: Response, id: ObjectId) {
+    const authToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '2m' });
+    const refreshToken = jwt.sign({ email: email, userId: id }, refreshTokenApiKey, { expiresIn: '3d' });
+
+    return res.status(200).json({ authToken: authToken, refreshToken: refreshToken, expiresIn: '2m' });
+}
+
+
+
+export const refreshToken = async (req: Request, res: Response) => {
+    const refreshToken = req.body.refreshToken;
+    let userEmailFromToken = ''
+    let userIdFromToken = ''
+    jwt.verify(refreshToken, tokenApiKey, (error: VerifyErrors | null, decoded: any) => {
+        if (error) {
+            console.error('Failed to verify token:', error);
+        } else {
+            userEmailFromToken = decoded.email;
+            userIdFromToken = decoded.userId;
+        }
+    });
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided' });
+    }
+    console.log('RefreshedData', userEmailFromToken, userIdFromToken)
+    const authToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '2m' });
+    const newRefreshToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, refreshTokenApiKey, { expiresIn: '3d' });
+    return res.status(200).json({ authToken: authToken, refreshToken: newRefreshToken, expiresIn: '2m' });
+}
+
+
+

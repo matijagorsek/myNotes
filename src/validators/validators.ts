@@ -24,7 +24,3 @@ export function isUppercaseAndSpecialCharacterPassword(password: string): boolea
   const passwordRegex = /^(?=.*[A-Z!@#$%^&*])/;
   return passwordRegex.test(password);
 }
-
-export function isAuthTokenValid(authToken :string):boolean{
-  return false
-}

@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import Note from '../models/Note';
-import { generateUniqueId, getTimestamp } from '../../utilities/utilities';
+import { saveNoteToDB } from '../../db/NotesDbRepo';
+import { generateUniqueId, getTimestamp } from '../../utilities/Utilities';
+import { ObjectId } from 'mongodb';
 
 const notes: Note[] = [];
+
 
 export const createNote = (req: Request, res: Response) => {
   const { content, authorId } = req.body;
@@ -17,24 +20,29 @@ export const createNote = (req: Request, res: Response) => {
     return res.status(400).json({ message: 'A note with the same content and authorId already exists.' });
   }
 
+
   const newNote: Note = {
-    id: generateUniqueId(),
+    _id: new ObjectId(),
     content,
     createdAt: getTimestamp(),
     updatedAt: getTimestamp(),
     authorId
   };
 
+  saveNoteToDB(newNote)
+
+
   notes.push(newNote);
 
   return res.status(200).json(newNote);
 };
 
+
 export const updateNote = (req: Request, res: Response) => {
   const noteId = req.params.id;
   const content = req.body.content;
 
-  const note = notes.find(note => note.id === noteId);
+  const note = notes.find(note => note._id.toString() === noteId);
 
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
@@ -48,7 +56,7 @@ export const updateNote = (req: Request, res: Response) => {
 
 export const deleteNote = (req: Request, res: Response) => {
   const noteId = req.params.id;
-  const noteIndex = notes.findIndex(note => note.id === noteId);
+  const noteIndex = notes.findIndex(note => note._id.toString() === noteId);
   if (noteIndex === -1) {
     return res.status(404).json({ message: 'Note not found.' });
   }
@@ -77,7 +85,7 @@ export const getAllNotesByAuthor = (req: Request, res: Response) => {
 
 export const getNoteById = (req: Request, res: Response) => {
   const noteId = req.params.id;
-  const note = notes.find(note => note.id === noteId);
+  const note = notes.find(note => note._id.toString() === noteId);
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
   }

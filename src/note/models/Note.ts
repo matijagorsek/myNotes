@@ -1,5 +1,7 @@
+import { ObjectId } from "mongodb";
+
 interface Note {
-  id: string;
+  _id: ObjectId;
   content: string;
   createdAt: number;
   updatedAt: number;

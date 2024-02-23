@@ -1,5 +1,7 @@
+import { ObjectId } from "mongodb";
+
 interface User {
-    id: string;
+    _id: ObjectId;
     firstName: string;
     lastName: string;
     email : string;
