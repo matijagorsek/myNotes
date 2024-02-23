@@ -28,3 +28,22 @@ export async function fetchAllNotesFromDb(): Promise<Note[]> {
 export async function updateNoteInTheDB(content: string, noteId: string, updatedAt: number) {
   await collection.updateOne({ _id: new ObjectId(noteId) }, { $set: { content: content, updatedAt: updatedAt } })
 }
+
+export async function fetchUsersNotes(authorId: string): Promise<Note[]> {
+  const allNotes = await collection.find().toArray()
+  console.log('Filtered all notes', allNotes)
+  const notes = await collection.find({ authorId: authorId }).toArray()
+  console.log('Filtered notes:', notes)
+  return notes as Note[]
+}
+
+export async function deleteNoteFromDb(noteId:string): Promise<boolean> {
+  const note = checkIfNoteExist(noteId)
+  if(!note){
+    return false
+  }else{
+    const deleteNote = await collection.findOneAndDelete({ _id: new ObjectId(noteId) });
+    if (deleteNote) return true
+  }
+  return false
+}

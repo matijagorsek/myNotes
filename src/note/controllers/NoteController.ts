@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Note from '../models/Note';
-import { checkIfNoteExist, fetchAllNotesFromDb, saveNoteToDB, updateNoteInTheDB } from '../../db/NotesDbRepo';
+import { checkIfNoteExist, deleteNoteFromDb, fetchAllNotesFromDb, fetchUsersNotes, saveNoteToDB, updateNoteInTheDB } from '../../db/NotesDbRepo';
 import { getTimestamp } from '../../utilities/Utilities';
 import { ObjectId } from 'mongodb';
 import { getAuthorId } from '../../auth/AuthMiddleware';
@@ -42,17 +42,16 @@ export const updateNote = async (req: Request, res: Response) => {
 
   note.content = content || note.content;
   note.updatedAt = getTimestamp();
-  await updateNoteInTheDB(content,noteId,note.updatedAt)
+  await updateNoteInTheDB(content, noteId, note.updatedAt)
   return res.json(note);
 };
 
 export const deleteNote = (req: Request, res: Response) => {
   const noteId = req.params.id;
-  const noteIndex = notes.findIndex(note => note._id.toString() === noteId);
-  if (noteIndex === -1) {
+  const checkIfNoteDeleted = deleteNoteFromDb(noteId)
+  if (!checkIfNoteDeleted) {
     return res.status(404).json({ message: 'Note not found.' });
   }
-  notes.splice(noteIndex, 1);
   return res.status(200).send();
 };
 
@@ -63,12 +62,12 @@ export const getAllNotes = async (req: Request, res: Response) => {
 
 export const getAllNotesByAuthor = async (req: Request, res: Response) => {
   const authorId = await getAuthorId(req);
-
+  console.log('FilteredId', authorId)
   if (!authorId) {
     return res.status(400).json({ message: 'AuthorId is required.' });
   }
 
-  const filteredNotes = notes.filter(note => note.authorId === authorId);
+  const filteredNotes = await fetchUsersNotes(authorId);
   if (filteredNotes.length == 0) {
     return res.status(204).json({ message: 'There are no notes for this user.' });
   }
