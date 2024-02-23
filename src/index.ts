@@ -8,7 +8,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const tokenApiKey = process.env.TOKEN_SECRET as string
-export const refreshTokenApiKey = process.env.REFRESH_TOKEN_SECRET as string
 const app = express();
 const PORT = 3000;
 

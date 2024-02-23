@@ -4,7 +4,7 @@ import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { isUppercaseAndSpecialCharacterPassword, isValidEmail, isValidPasswordLength } from '../../validators/validators';
 import { ObjectId } from 'mongodb';
 import { checkIfUserExist, loginUserWithDb, saveUserToDB } from '../../db/UserRepo';
-import { refreshTokenApiKey, tokenApiKey } from '../..';
+import { tokenApiKey } from '../..';
 
 
 let users: any[] = [];
@@ -71,7 +71,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
 function returnUserData(email: string, res: Response, id: ObjectId) {
     const authToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '2m' });
-    const refreshToken = jwt.sign({ email: email, userId: id }, refreshTokenApiKey, { expiresIn: '3d' });
+    const refreshToken = jwt.sign({ email: email, userId: id }, tokenApiKey, { expiresIn: '3d' });
 
     return res.status(200).json({ authToken: authToken, refreshToken: refreshToken, expiresIn: '2m' });
 }
@@ -95,7 +95,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     }
     console.log('RefreshedData', userEmailFromToken, userIdFromToken)
     const authToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '2m' });
-    const newRefreshToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, refreshTokenApiKey, { expiresIn: '3d' });
+    const newRefreshToken = jwt.sign({ email: userEmailFromToken, userId: userIdFromToken }, tokenApiKey, { expiresIn: '3d' });
     return res.status(200).json({ authToken: authToken, refreshToken: newRefreshToken, expiresIn: '2m' });
 }
 
