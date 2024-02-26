@@ -1,6 +1,9 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
 
-const url = 'mongodb+srv://matijagorshek:test1234@cluster0.zox0ftb.mongodb.net/?retryWrites=true&w=majority';
+dotenv.config();
+
+const url = process.env.MONGO_DB_URI as string;
 const dbName = 'MyNotesDB';
 let client = new MongoClient(url);
 

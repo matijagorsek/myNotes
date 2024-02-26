@@ -1,7 +1,7 @@
 import express from 'express';
-import userRoutes from './user/routes/UserRoutes'
+import userApi from './user/api/UserApi'
 import bodyParser from 'body-parser';
-import noteRoutes from './note/routes/NoteRoutes';
+import noteApi from './note/api/NoteApi';
 import db from './db/MyNotesDB';
 import dotenv from 'dotenv';
 
@@ -20,8 +20,8 @@ db.connect().then(() => {
 
 app.use(bodyParser.json());
 
-app.use('/notes', noteRoutes);
-app.use('/users', userRoutes)
+app.use('/notes', noteApi);
+app.use('/users', userApi)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,13 +1,16 @@
 import { NextFunction, Response, Request } from "express";
+import { ObjectId } from "mongodb";
 import { validate } from "uuid";
 
 
-export const validateId = (req: Request, res: Response, next: NextFunction) => {
+export function validateId(req: Request, res: Response): boolean {
   const noteId = req.params.id;
-  if (!validate(noteId)) {
-    return res.status(400).json({ message: 'Invalid note ID.' });
+  const objectNoteID = new ObjectId(noteId)
+  if (!ObjectId.isValid(objectNoteID)) {
+    return false
+  } else {
+    return true
   }
-  next();
 };
 
 export function isValidEmail(email: string): boolean {

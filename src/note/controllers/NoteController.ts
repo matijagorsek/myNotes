@@ -1,12 +1,14 @@
 import { Request, Response } from 'express';
 import Note from '../models/Note';
-import { checkIfNoteExist, deleteNoteFromDb, fetchAllNotesFromDb, fetchUsersNotes, saveNoteToDB, updateNoteInTheDB } from '../../db/NotesDbRepo';
+import NotesMongoDbRepo from '../../db/NotesMongoDbRepo';
 import { getTimestamp } from '../../utilities/Utilities';
 import { ObjectId } from 'mongodb';
-import { getAuthorId } from '../../auth/AuthMiddleware';
+import { getAuthorId, getUserRole } from '../../auth/AuthMiddleware';
+import { NoteRepo } from '../repo/NoteRepo';
+import UserRole, { toUserRole } from '../../user/models/UserRole';
 
 const notes: Note[] = [];
-
+const notesImpl: NoteRepo = new NotesMongoDbRepo()
 
 export const createNote = async (req: Request, res: Response) => {
   const { content } = req.body;
@@ -23,7 +25,8 @@ export const createNote = async (req: Request, res: Response) => {
     authorId
   };
 
-  saveNoteToDB(newNote)
+
+  notesImpl.saveNote(newNote)
   notes.push(newNote);
 
   return res.status(200).json(newNote);
@@ -33,22 +36,27 @@ export const createNote = async (req: Request, res: Response) => {
 export const updateNote = async (req: Request, res: Response) => {
   const noteId = req.params.id;
   const content = req.body.content;
-
-  const note = await checkIfNoteExist(noteId)
-
+  const note = await notesImpl.checkIfNoteExist(noteId)
+  if (toUserRole(await getUserRole(req)) != UserRole.ADMIN) {
+    return res.status(403).json({ message: 'User cannot update the note.' });
+  }
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
   }
 
   note.content = content || note.content;
   note.updatedAt = getTimestamp();
-  await updateNoteInTheDB(content, noteId, note.updatedAt)
+  await notesImpl.updateNote(content, noteId, note.updatedAt)
   return res.json(note);
 };
 
-export const deleteNote = (req: Request, res: Response) => {
+export const deleteNote = async (req: Request, res: Response) => {
   const noteId = req.params.id;
-  const checkIfNoteDeleted = deleteNoteFromDb(noteId)
+  
+  if (toUserRole(await getUserRole(req)) != UserRole.ADMIN) {
+    return res.status(403).json({ message: 'User cannot delete the note.' });
+  }
+  const checkIfNoteDeleted = notesImpl.deleteNote(noteId)
   if (!checkIfNoteDeleted) {
     return res.status(404).json({ message: 'Note not found.' });
   }
@@ -56,7 +64,7 @@ export const deleteNote = (req: Request, res: Response) => {
 };
 
 export const getAllNotes = async (req: Request, res: Response) => {
-  const notes = await fetchAllNotesFromDb()
+  const notes = await notesImpl.fetchAllNotes()
   return res.status(200).json(notes)
 }
 
@@ -67,7 +75,7 @@ export const getAllNotesByAuthor = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'AuthorId is required.' });
   }
 
-  const filteredNotes = await fetchUsersNotes(authorId);
+  const filteredNotes = await notesImpl.fetchUsersNotes(authorId);
   if (filteredNotes.length == 0) {
     return res.status(204).json({ message: 'There are no notes for this user.' });
   }
@@ -75,9 +83,9 @@ export const getAllNotesByAuthor = async (req: Request, res: Response) => {
 };
 
 
-export const getNoteById = (req: Request, res: Response) => {
+export const getNoteById = async (req: Request, res: Response) => {
   const noteId = req.params.id;
-  const note = notes.find(note => note._id.toString() === noteId);
+  const note = await notesImpl.fetchNote(noteId)
   if (!note) {
     return res.status(404).json({ message: 'Note not found.' });
   }

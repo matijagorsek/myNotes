@@ -1,6 +1,7 @@
 import { NextFunction, Response, Request } from "express";
 import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { tokenApiKey } from "..";
+import UserRole from "../user/models/UserRole";
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -35,6 +36,25 @@ export const getAuthorId = async (req: Request): Promise<string> => {
         reject('Failed to verify token');
       } else {
         const userIdFromToken = decoded.userId;
+        resolve(userIdFromToken);
+      }
+    });
+  });
+}
+
+export const getUserRole = async (req: Request): Promise<UserRole> => {
+  const token = req.headers.authorization?.split(' ')[1] as string
+  return new Promise((resolve, reject) => {
+    if (!token) {
+      reject('No token provided');
+    }
+
+    jwt.verify(token, tokenApiKey, (error: VerifyErrors | null, decoded: any) => {
+      if (error) {
+        console.error('Failed to verify token:', error);
+        reject('Failed to verify token');
+      } else {
+        const userIdFromToken = decoded.userRole;
         resolve(userIdFromToken);
       }
     });
