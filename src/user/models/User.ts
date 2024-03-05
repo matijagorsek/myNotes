@@ -10,6 +10,7 @@ interface User {
     password: string;
     userRole: UserRole;
     gender: UserGender;
+    verified: false
 }
 
 export default User;

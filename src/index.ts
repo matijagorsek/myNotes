@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+export const mailerMail = process.env.EMAIL_USERNAME as string
+export const mailerPass = process.env.EMAIL_PASSWORD as string
 export const tokenApiKey = process.env.TOKEN_SECRET as string
 const app = express();
 const PORT = 3000;

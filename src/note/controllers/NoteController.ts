@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Note from '../models/Note';
 import NotesMongoDbRepo from '../../db/NotesMongoDbRepo';
-import { getTimestamp } from '../../utilities/Utilities';
+import { getTimestamp } from '../../utilities/utilities';
 import { ObjectId } from 'mongodb';
 import { getAuthorId, getUserRole } from '../../auth/AuthMiddleware';
 import { NoteRepo } from '../repo/NoteRepo';
@@ -52,7 +52,7 @@ export const updateNote = async (req: Request, res: Response) => {
 
 export const deleteNote = async (req: Request, res: Response) => {
   const noteId = req.params.id;
-  
+
   if (toUserRole(await getUserRole(req)) != UserRole.ADMIN) {
     return res.status(403).json({ message: 'User cannot delete the note.' });
   }
